@@ -1,0 +1,79 @@
+[Controllare i gitIgnore nelle varie cartelle]:{
+    git check-ignore -v **/*
+},
+[Preparare il BE per il Deploy]:{
+    //src/app.module.ts
+    npm install --save @nestjs/serve-static
+ 
+    //e poi si modifica il modulo
+            @Module({
+                imports: [
+                    EventsModule,
+                    ServeStaticModule.forRoot({
+                        rootPath: join(__dirname, '..', 'simple-live-chat-fe'),
+                    }),],
+                controllers: [],
+                providers: [],
+            })
+            export class AppModule {}
+
+
+    //src/main.ts
+    -await app.listen(process.env.PORT || 3000); //in questo modo se
+        si avvia in ambiente prod userà la porta specifica.
+    -app.enableCors(); //Abilito le request cross origin
+    -controllare che .gitIgnore ci eviti di caricare file indesiderati o inutili
+        quello di base dovrebbe già andare bene.
+
+
+    //package.json //Questi script sono fondamentali per far partire l'app in heroku
+    "start:prod": "node dist/main.js",
+    "prestart:prod": "rimraf dist && npm run build", //effettua la build prima dell'istallazione
+    "postinstall": "npm run prestart:prod",
+    "build": "nest build",
+},
+[Creare un'app heroku]:{
+    1)Initializzare la cartella con git
+    2)heroku git:remote -a MY-HEROKU-APP
+        //Così associo la mia repo locale alla repo di heroku
+    3)Configurare heroku
+        heroku config:set NPM_CONFIG_PRODUCTION=false
+        heroku config:set NODE_ENV=production
+    4)Creare Procfile con dentro scritto [web: npm run start:prod]
+    5)Caricare il codice ed avviare l'app
+        git add .
+        git commit -m "doing it live"
+        git push heroku master
+}
+[Stoppare Build heroku]:{
+    heroku plugins:install heroku-builds
+    heroku builds:cancel 8f9f0608-6fab-4e32-89e8-c9f74813ce95 -a simple-live-chat-app
+},
+[Preparare FE]:{
+    -Si devono creare le configurazioni per i vari ambienti:
+    /environments/environment.ts -> per locale
+        export const environment = {
+            production: false,
+            backendUrl: "https://localhost:3000"
+        };
+    /environments/environment.prod.ts -> per prod
+        export const environment = {
+            production: true,
+            backendUrl: "/"
+        };
+    -Usare le variabili create
+        this.socket = io(environment.backendUrl);
+
+    -creare la build da servire con nestjs
+        ng build --prod
+    
+    -Adesso si deve prendere la build e metterla nella root del BE
+        Ci si deve ricordare di specificare il nome della cartella fe da servire
+        staticamente nel ServeStaticModule
+
+        ServeStaticModule.forRoot({
+            rootPath: join(__dirname, '..', 'simple-live-chat-fe'),
+        }),],
+
+
+}

@@ -1,0 +1,23 @@
+<p>Server Client Communication</p>
+<p>Utenti connessi:</p>
+<ul>
+  <li *ngFor="let user of users"> {{user}} </li>
+</ul>
+<p>Chat</p>
+<ul>
+  <li *ngFor="let message of messages"> {{message}} </li>
+</ul>
+<p>Fatti sentire!</p>
+  <textarea
+      spellcheck="true"
+      autocomplete="true"
+      autocorrect="true"
+      rows="1"
+      class="chat-input"
+      [(ngModel)]="message"
+      placeholder="type message..."
+      (keyup.enter)="addChat()"
+    >
+    </textarea>
+
+    <button (click)="addChat()">send</button>

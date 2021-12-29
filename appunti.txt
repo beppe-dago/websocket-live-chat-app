@@ -1,0 +1,64 @@
+[Intro]:{
+    E' una forma di comunicazione diversa dalle richieste e risposte HTTP.
+    In questo caso la richiesta di aprire un canale di comunicazione 
+    avvine una sola volta e poi la comunicazione rimane attiva.
+
+    NestJs integra già la comunicazione con websocket.
+},
+[Usare WebSockets in NestJs]:{
+    npm install --save @nestjs/websockets //istallo il package
+
+    nest g module chat //Creo il modulo della chat
+
+    chat.gateway.ts //creo un gateway per la gestione della comunicazione
+
+    @WebSocketGateway() //Questo decorator su di una classe permette l'uso
+                        della comunicazione bidirezionale di socket.io.
+
+    OnGatewayConnection //Interfaccia da implementare per gestire il momento in comunicazione
+                        ci si connette al gateway. Richiede di implementare handleConnection()
+
+
+    OnGatewayDisconnect //Interfacce per gestire la disconnessione.
+                        Richiede di implementare handleConnection()
+
+     @WebSocketServer() server; //Permette di accedere all'istanza del server
+
+
+     ///////////////////////////////////////////////////////////////////////////////////////////////////////
+     import {
+            WebSocketGateway,
+            WebSocketServer,
+            SubscribeMessage,
+            OnGatewayConnection,
+            OnGatewayDisconnect,
+        } from '@nestjs/websockets';
+        
+        @WebSocketGateway(3333) //permette di usare socket.io
+        export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
+            
+            @WebSocketServer() server;  //Permette di accedere all'istanza del server
+
+            users : number = 0;
+
+            async handleDisconnect() {//Metodo di OnGatewayDisconnect ha anche dei parametri
+                //Triggera ogni volta un client si disconnette
+                this.users++;
+                this.server.emit('users', this.users);
+            }
+
+            async handleConnection() {//Metodo di OnGatewayConnection ha anche dei parametri
+                //Triggera ogni volta un client si connette
+                this.users++;
+                this.server.emit('users', this.users);
+            }
+
+            @SubscribeMessage('chat') //Permette di rimanere in ascolto dei messaggi in arrivo
+            async onChat(client, message) {
+                client.broadcast.emit('chat', message);
+            }
+            
+        }
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+}

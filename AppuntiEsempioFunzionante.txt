@@ -1,0 +1,93 @@
+[Struttura FE]:{
+    La struttura presenta l'app component standard modificato e un
+    modulo typescript (file), store, con all'interno l'interface del
+    model del todo, un metodo const per mappare i dati della response,
+    E la classe TodoStore.
+
+    TodoStore viene passato tramite i providers in appModule.
+
+    AppComponent fa semplicemente il crud sulla todoList.
+},
+[Invio stringa al server]:{
+    //app.component.ts
+    this.todoStore.add(this.newTodoText);
+
+    //store.ts
+    this.socket.emit("todo:create", { title, completed: false }, (res) => {funzione per gestire la response} 
+
+    Sintesi:
+    -Il component prende l'input e usa TodoStore per emettere il payload al server
+    e immagazzinare la lista dei todo. 
+    -L'emissione del payload avviene tramite this.socket -> Socket<ServerEvents, ClientEvents>
+    [Socket]:{
+        E' la classe fondamentale per interagire con un server. Una Socket
+        appartiene ad un determinato namespace che di default è (/) e un
+        ?-Manager-? per comunicare.
+
+        Una Socket è di base un EventEmitter che invia eventi e riceve eventi dal server
+        attraverso la rete.
+
+        [API]:{
+            -socket.id : string -> Un identificativo univoco per la sessione della socket,
+                Viene definito dopo l'evento di connect e aggiornato all'evento di reconnect.
+            -socket.connected : boolean -> indica se la socket è connessa al server.
+            -socket.disconnected : boolean
+            -socket.io : Manager -> Una variabile per riferimento del Manager.??
+            
+            -socket.connect() : Socket -> Connette manualmente alla socket.
+                Esempio riconnessione -> socket.on("disconnect", () => {  socket.connect();});
+            -socket.open() : Socket -> sinonimo di connect.
+            -socket.send([...args]:any[] [,ack : Function]) : Socket -> invia un evento messaggio.
+            -socket.emit(eventName[,...args][,ack]) : true -> Emette un evento al socket identificato dal nome della stringa
+                passata eventName, ogni altro parametro può essere incluso. Tutte le strutture
+                dati serializzabili sono supportate, incluso Buffer.
+                In sostanza si definisce un nome per l'evento, e si da un paylod che viene preso completed
+                array di args.
+                ack è una funzione che verrà chimata con la risposta del server.
+                (res) => {
+                if ("error" in res) {
+                    // handle the error
+                    return;
+                }
+                //Altrimenti fai questo
+
+
+            -... -> https://socket.io/docs/v4/client-api/
+        }
+    }
+
+    -ServerEvents è una classe ListenEvents extends EventsMap = DefaultEventsMap
+        ClientEvents è una classe EmitEvents extends EventsMap = ListenEvents>,
+        in sostanza sono come degli oggetti dove c'è chiave valore di qualsiasi tipo, in effetti il payload
+        che uso di solito con gli EventEmitter è qualsiasi cosa io passi non ha una interface specifica,
+        quella forse viene aggiunta dopo nel trasporto.
+        SONO DUE PAYLOAD.
+
+    -this.socket.emit("todo:create", { title, completed: false }, (res) => {...});
+        //emetto un evento "todo:create" che porta come payload { title, completed: false } e 
+        come ack -> 
+        if ("error" in res) {
+            // handle the error
+            return;
+        }
+            this.todos.push({
+                id: res.data,
+                title,
+                completed: false,
+                editing: false,
+                synced: true
+            });
+        });
+    -L'ack in sostanza dice: se ci sono stati errori, gestisci gli errori e annulla l'operazione,
+        altrimenti aggiungi il nuovo todo alla lista con i dati che il be ha inviato.
+        Inoltre quando si usano i dati inviati dal server si cambia il valore della variabile
+        synced a true ad indicare che sono dati in sincrono con  quelli presenti nel server.
+        Allo stesso modo quando si crea un dato nel front o lo si modifica questo non è 
+        synced.
+}
+[Struttura BE]:{
+    //index.ts
+    E' il file che viene usato per avviare il server,
+    Crea un'istanza server con createServer() di http
+    avvia l'app con il server, InMemeoryRepository e serverOptions.
+}

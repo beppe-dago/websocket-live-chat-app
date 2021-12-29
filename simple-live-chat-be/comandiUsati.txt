@@ -1,0 +1,6 @@
+ nest g m events
+ nest g module events
+ nest g gateway events/events
+ npm install @nestjs/websockets
+ npm install socket.io
+ npm install @nestjs/platform-socket.io
